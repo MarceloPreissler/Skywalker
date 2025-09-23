@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+aiosqlite
+psycopg[binary]
+requests
+beautifulsoup4
+apscheduler
+loguru
+python-dotenv
+pydantic
+pydantic-settings
+pytest
+pytest-asyncio
+httpx
