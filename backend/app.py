@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
 import os
 import psycopg2
 
@@ -23,7 +24,10 @@ def health_check():
                 cur.execute("SELECT 1")
         return {"status": "ok"}
     except Exception as exc:  # pragma: no cover - defensive log
-        return {"status": "error", "detail": str(exc)}
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "error", "detail": str(exc)},
+        )
 
 
 @app.get("/")
