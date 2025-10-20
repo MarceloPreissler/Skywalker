@@ -173,3 +173,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Sensitive business files
+matrix_query.sql
+*_query.sql
