@@ -10,6 +10,7 @@ export interface Plan {
   features?: string;
   url?: string;
   last_scraped_at: string;
+  estimated_savings_vs_txu?: number;
   provider?: Provider;
 }
 
