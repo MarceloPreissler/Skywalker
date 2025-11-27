@@ -30,7 +30,7 @@ cp .env.example .env
 
 | Variable | Description |
 | --- | --- |
-| `DATABASE_URL` | SQLAlchemy connection string (PostgreSQL in production, SQLite allowed locally). |
+| `DATABASE_URL` | SQLAlchemy connection string (PostgreSQL in production, SQLite allowed locally). When using Docker Compose, set the host to `db`. |
 | `API_KEY` | API key required for `POST /scrape`. |
 | `SCRAPE_PROVIDERS` | Comma-separated list of provider slugs to run during scheduled jobs. |
 | `SCRAPE_INTERVAL_MINUTES` | Interval for recurring scrapes. |
@@ -78,6 +78,8 @@ docker-compose up --build
 
 This launches PostgreSQL, the FastAPI backend, and the Vite dev server with appropriate environment configuration.
 
+When using Docker Compose, ensure the database host portion of `DATABASE_URL` in your `.env` file points to `db` so the backend container can reach the PostgreSQL service (e.g. `postgresql+asyncpg://postgres:postgres@db:5432/energy`).
+
 ### Makefile Commands
 
 ```bash
@@ -94,6 +96,10 @@ The backend includes pytest suites:
 ```bash
 make test
 ```
+
+During collection pytest reports progress as it moves through the suite. Seeing an intermediate message such as `[ 42% ]`
+simply reflects that the first test module has completed (3 of 7 tests) and the run will finish at `[100%]` once every
+backend test passes.
 
 Ensure Node.js linting/tests are added as desired.
 

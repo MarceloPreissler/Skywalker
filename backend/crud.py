@@ -1,13 +1,18 @@
 from typing import Iterable, List, Sequence
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import models, schemas
 
 
 async def get_providers(session: AsyncSession) -> Sequence[models.Provider]:
-    result = await session.execute(select(models.Provider).order_by(models.Provider.name))
+    result = await session.execute(
+        select(models.Provider)
+        .options(selectinload(models.Provider.plans))
+        .order_by(models.Provider.name)
+    )
     return result.scalars().unique().all()
 
 
@@ -40,7 +45,11 @@ async def list_plans(session: AsyncSession) -> Sequence[models.Plan]:
 
 
 async def get_plan(session: AsyncSession, plan_id: int) -> models.Plan | None:
-    result = await session.execute(select(models.Plan).where(models.Plan.id == plan_id))
+    result = await session.execute(
+        select(models.Plan)
+        .options(selectinload(models.Plan.provider))
+        .where(models.Plan.id == plan_id)
+    )
     return result.scalar_one_or_none()
 
 
