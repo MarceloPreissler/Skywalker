@@ -9,6 +9,7 @@ WITH SourceData AS (
     SELECT
         LEFT(a.YEARMONTH,4)  AS YearLook,
         RIGHT(a.YEARMONTH,2) AS MonthLook,
+        CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'CALL CENTER'
         CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'Reactive'
              WHEN a.CHANNEL IN ('WEB SEARCH', 'WEB_SEARCH')             THEN 'Web Search'
              WHEN a.CHANNEL IN ('ONLINE PARTNER')                      THEN 'SOE'
@@ -32,6 +33,7 @@ WITH SourceData AS (
       AND a.CHANNEL NOT IN ('BD_MASS')
     GROUP BY
         a.YEARMONTH,
+        CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'CALL CENTER'
         CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'Reactive'
              WHEN a.CHANNEL IN ('WEB SEARCH', 'WEB_SEARCH')             THEN 'Web Search'
              WHEN a.CHANNEL IN ('ONLINE PARTNER')                      THEN 'SOE'
@@ -52,6 +54,7 @@ ScottChannels AS (
     SELECT
         YearLook,
         MonthLook,
+        CASE WHEN MatrixChannel IN ('CALL CENTER','Partnerships/Events','Other','Unknown')
         CASE WHEN MatrixChannel IN ('Reactive','Partnerships/Events','Other','Unknown')
                   THEN 'Reactive'
              ELSE MatrixChannel
@@ -62,6 +65,7 @@ ScottChannels AS (
     GROUP BY
         YearLook,
         MonthLook,
+        CASE WHEN MatrixChannel IN ('CALL CENTER','Partnerships/Events','Other','Unknown')
         CASE WHEN MatrixChannel IN ('Reactive','Partnerships/Events','Other','Unknown')
                   THEN 'Reactive'
              ELSE MatrixChannel
@@ -69,6 +73,19 @@ ScottChannels AS (
         TermMTM
 )
 
+SELECT ScottChannel,
+       [202401],[202402],[202403],[202404],[202405],[202406],
+       [202407],[202408],[202409],[202410],[202411],[202412],
+       [202501],[202502],[202503],[202504],[202505],[202506]
+FROM ScottChannels
+PIVOT (
+    SUM(GainCount)
+    FOR (YearLook + MonthLook) IN (
+        [202401],[202402],[202403],[202404],[202405],[202406],
+        [202407],[202408],[202409],[202410],[202411],[202412],
+        [202501],[202502],[202503],[202504],[202505],[202506]
+    )
+) AS p
 SELECT
     ScottChannel,
     [202401],[202402],[202403],[202404],[202405],[202406],
