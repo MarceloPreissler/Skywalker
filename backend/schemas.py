@@ -32,6 +32,9 @@ class PlanRead(PlanBase):
     id: int
     provider_id: int
     last_scraped_at: datetime
+    estimated_savings_vs_txu: Optional[float] = Field(
+        default=None, description="Estimated monthly savings compared to TXU"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 

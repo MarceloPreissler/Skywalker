@@ -53,8 +53,46 @@ def test_scrape_and_fetch_plans(client):
     response = client.post("/scrape", headers={"x-api-key": "test-key"})
     assert response.status_code == 202
 
+    providers_response = client.get("/providers")
+    assert providers_response.status_code == 200
+    providers = providers_response.json()
+    provider_lookup = {provider["id"]: provider["slug"] for provider in providers}
+
     plans_response = client.get("/plans")
     assert plans_response.status_code == 200
     plans = plans_response.json()
     assert plans
     assert {plan["provider_id"] for plan in plans}
+    assert any("estimated_savings_vs_txu" in plan for plan in plans)
+
+    txu_provider_id = next(
+        (provider_id for provider_id, slug in provider_lookup.items() if slug == "txu"),
+        None,
+    )
+    assert txu_provider_id is not None
+
+
+
+def test_benchmark_against_txu_positive_for_cheaper_plan():
+    from backend.routes import plans as plan_routes
+    from backend import models
+
+    usage = plan_routes.BENCHMARK_USAGE_KWH
+    txu_plan = models.Plan(
+        provider_id=1,
+        name="TXU Benchmark",
+        term_months=12,
+        rate_cents_kwh=15.0,
+        base_fee=10.0,
+    )
+    competitor = models.Plan(
+        provider_id=2,
+        name="Better Rate",
+        term_months=12,
+        rate_cents_kwh=10.0,
+        base_fee=5.0,
+    )
+
+    savings = plan_routes._benchmark_against_txu(competitor, txu_plan, usage)
+    assert savings is not None
+    assert savings > 0

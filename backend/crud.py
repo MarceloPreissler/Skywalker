@@ -2,12 +2,17 @@ from typing import Iterable, List, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from . import models, schemas
 
 
 async def get_providers(session: AsyncSession) -> Sequence[models.Provider]:
-    result = await session.execute(select(models.Provider).order_by(models.Provider.name))
+    result = await session.execute(
+        select(models.Provider)
+        .options(selectinload(models.Provider.plans))
+        .order_by(models.Provider.name)
+    )
     return result.scalars().unique().all()
 
 
@@ -16,6 +21,18 @@ async def get_provider_by_slug(session: AsyncSession, slug: str) -> models.Provi
         select(models.Provider).where(models.Provider.slug == slug)
     )
     return result.scalar_one_or_none()
+
+
+async def get_plans_by_provider_slug(
+    session: AsyncSession, slug: str
+) -> Sequence[models.Plan]:
+    result = await session.execute(
+        select(models.Plan)
+        .join(models.Provider)
+        .options(selectinload(models.Plan.provider))
+        .where(models.Provider.slug == slug)
+    )
+    return result.scalars().unique().all()
 
 
 async def upsert_provider(session: AsyncSession, provider: schemas.ProviderCreate) -> models.Provider:
@@ -34,13 +51,19 @@ async def upsert_provider(session: AsyncSession, provider: schemas.ProviderCreat
 
 async def list_plans(session: AsyncSession) -> Sequence[models.Plan]:
     result = await session.execute(
-        select(models.Plan).order_by(models.Plan.rate_cents_kwh, models.Plan.term_months)
+        select(models.Plan)
+        .options(selectinload(models.Plan.provider))
+        .order_by(models.Plan.rate_cents_kwh, models.Plan.term_months)
     )
     return result.scalars().unique().all()
 
 
 async def get_plan(session: AsyncSession, plan_id: int) -> models.Plan | None:
-    result = await session.execute(select(models.Plan).where(models.Plan.id == plan_id))
+    result = await session.execute(
+        select(models.Plan)
+            .options(selectinload(models.Plan.provider))
+            .where(models.Plan.id == plan_id)
+    )
     return result.scalar_one_or_none()
 
 

@@ -55,6 +55,7 @@ export const PlanTable = ({
             <TableCell align="right">Rate (¢/kWh)</TableCell>
             <TableCell align="right">Base Fee ($)</TableCell>
             <TableCell align="right">Renewable %</TableCell>
+            <TableCell align="right">Estimated savings vs TXU ($/mo)</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -75,6 +76,13 @@ export const PlanTable = ({
               <TableCell align="right">{plan.rate_cents_kwh?.toFixed(2)}</TableCell>
               <TableCell align="right">{plan.base_fee?.toFixed(2)}</TableCell>
               <TableCell align="right">{plan.renewable_percentage ?? '—'}</TableCell>
+              <TableCell align="right">
+                {plan.estimated_savings_vs_txu != null
+                  ? `${plan.estimated_savings_vs_txu < 0 ? '-' : ''}$${Math.abs(
+                      plan.estimated_savings_vs_txu
+                    ).toFixed(2)}`
+                  : '—'}
+              </TableCell>
               <TableCell>
                 <Tooltip title="View details">
                   <IconButton size="small" onClick={() => onShowDetails(plan)}>
