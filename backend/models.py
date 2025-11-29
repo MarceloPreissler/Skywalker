@@ -44,3 +44,10 @@ class Plan(Base):
     )
 
     provider: Mapped[Provider] = relationship(back_populates="plans")
+
+    def cost_for_usage(self, usage_kwh: float) -> float:
+        """Estimate the monthly cost for a given energy usage."""
+
+        rate_cents = self.rate_cents_kwh or 0.0
+        base_fee = self.base_fee or 0.0
+        return base_fee + (rate_cents / 100.0) * usage_kwh
