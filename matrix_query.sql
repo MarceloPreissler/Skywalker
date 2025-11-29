@@ -10,6 +10,7 @@ WITH SourceData AS (
         LEFT(a.YEARMONTH,4)  AS YearLook,
         RIGHT(a.YEARMONTH,2) AS MonthLook,
         CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'CALL CENTER'
+        CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'Reactive'
              WHEN a.CHANNEL IN ('WEB SEARCH', 'WEB_SEARCH')             THEN 'Web Search'
              WHEN a.CHANNEL IN ('ONLINE PARTNER')                      THEN 'SOE'
              WHEN a.CHANNEL IN ('RAQ','REQUEST A QUOTE','TEE.COM')     THEN 'RAQ'
@@ -33,6 +34,7 @@ WITH SourceData AS (
     GROUP BY
         a.YEARMONTH,
         CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'CALL CENTER'
+        CASE WHEN a.CHANNEL IN ('WEB PHONE REACTIVE', 'REACTIVE', 'CALL CENTER') THEN 'Reactive'
              WHEN a.CHANNEL IN ('WEB SEARCH', 'WEB_SEARCH')             THEN 'Web Search'
              WHEN a.CHANNEL IN ('ONLINE PARTNER')                      THEN 'SOE'
              WHEN a.CHANNEL IN ('RAQ','REQUEST A QUOTE','TEE.COM')     THEN 'RAQ'
@@ -53,6 +55,7 @@ ScottChannels AS (
         YearLook,
         MonthLook,
         CASE WHEN MatrixChannel IN ('CALL CENTER','Partnerships/Events','Other','Unknown')
+        CASE WHEN MatrixChannel IN ('Reactive','Partnerships/Events','Other','Unknown')
                   THEN 'Reactive'
              ELSE MatrixChannel
         END AS ScottChannel,
@@ -63,6 +66,7 @@ ScottChannels AS (
         YearLook,
         MonthLook,
         CASE WHEN MatrixChannel IN ('CALL CENTER','Partnerships/Events','Other','Unknown')
+        CASE WHEN MatrixChannel IN ('Reactive','Partnerships/Events','Other','Unknown')
                   THEN 'Reactive'
              ELSE MatrixChannel
         END,
@@ -82,4 +86,28 @@ PIVOT (
         [202501],[202502],[202503],[202504],[202505],[202506]
     )
 ) AS p
+SELECT
+    ScottChannel,
+    [202401],[202402],[202403],[202404],[202405],[202406],
+    [202407],[202408],[202409],[202410],[202411],[202412],
+    [202501],[202502],[202503],[202504],
+    CASE WHEN ScottChannel = 'SOE' THEN ISNULL([202505],0) + 285
+         WHEN ScottChannel = 'Reactive' THEN ISNULL([202505],0) - 285
+         ELSE [202505] END AS [202505],
+    [202506]
+FROM (
+    SELECT ScottChannel,
+           [202401],[202402],[202403],[202404],[202405],[202406],
+           [202407],[202408],[202409],[202410],[202411],[202412],
+           [202501],[202502],[202503],[202504],[202505],[202506]
+    FROM ScottChannels
+    PIVOT (
+        SUM(GainCount)
+        FOR (YearLook + MonthLook) IN (
+            [202401],[202402],[202403],[202404],[202405],[202406],
+            [202407],[202408],[202409],[202410],[202411],[202412],
+            [202501],[202502],[202503],[202504],[202505],[202506]
+        )
+    ) AS p
+) adj
 ORDER BY ScottChannel;
