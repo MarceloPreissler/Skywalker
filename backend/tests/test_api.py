@@ -35,6 +35,13 @@ def client():
         yield client
 
 
+def trigger_scrape(client: TestClient, *, providers: list[str] | None = None) -> dict:
+    payload = {"providers": providers} if providers is not None else None
+    response = client.post("/scrape", headers={"x-api-key": "test-key"}, json=payload)
+    assert response.status_code == 202
+    return response.json()
+
+
 def test_health_endpoint(client):
     response = client.get("/health")
     assert response.status_code == 200
@@ -50,8 +57,9 @@ def test_scrape_endpoint_requires_api_key(client):
 
 
 def test_scrape_and_fetch_plans(client):
-    response = client.post("/scrape", headers={"x-api-key": "test-key"})
-    assert response.status_code == 202
+    scrape_result = trigger_scrape(client)
+    assert scrape_result["status"] == "queued"
+    assert scrape_result["results"]
 
     providers_response = client.get("/providers")
     assert providers_response.status_code == 200
@@ -63,6 +71,54 @@ def test_scrape_and_fetch_plans(client):
     plans = plans_response.json()
     assert plans
     assert {plan["provider_id"] for plan in plans}
+
+
+def test_plan_detail_endpoint(client):
+    trigger_scrape(client)
+
+    plans = client.get("/plans").json()
+    plan = plans[0]
+    plan_id = plan["id"]
+
+    detail_response = client.get(f"/plans/{plan_id}")
+    assert detail_response.status_code == 200
+    detail = detail_response.json()
+    assert detail["id"] == plan_id
+    assert detail["provider_id"] == plan["provider_id"]
+    assert detail["name"] == plan["name"]
+
+
+def test_providers_endpoint_returns_data(client):
+    trigger_scrape(client)
+
+    providers_response = client.get("/providers")
+    assert providers_response.status_code == 200
+    providers = providers_response.json()
+    assert providers
+    assert {provider["slug"] for provider in providers}
+    for provider in providers:
+        assert provider["plans"]
+        assert all(plan["provider_id"] == provider["id"] for plan in provider["plans"])
+
+
+def test_scrape_rejects_empty_provider_list(client):
+    response = client.post(
+        "/scrape",
+        headers={"x-api-key": "test-key"},
+        json={"providers": []},
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "No providers requested"
+
+
+def test_scrape_rejects_unknown_provider(client):
+    response = client.post(
+        "/scrape",
+        headers={"x-api-key": "test-key"},
+        json={"providers": ["unknown"]},
+    )
+    assert response.status_code == 400
+    assert "Unknown provider slug" in response.json()["detail"]
     assert any("estimated_savings_vs_txu" in plan for plan in plans)
 
     txu_provider_id = next(

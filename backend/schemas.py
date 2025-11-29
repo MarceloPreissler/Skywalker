@@ -52,6 +52,6 @@ class ProviderCreate(ProviderBase):
 class ProviderRead(ProviderBase):
     id: int
     created_at: datetime
-    plans: List[PlanRead] = []
+    plans: List[PlanRead] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
