@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import os
 import psycopg2
 
@@ -23,7 +23,7 @@ def health_check():
                 cur.execute("SELECT 1")
         return {"status": "ok"}
     except Exception as exc:  # pragma: no cover - defensive log
-        return {"status": "error", "detail": str(exc)}
+        raise HTTPException(status_code=503, detail="Database connectivity check failed") from exc
 
 
 @app.get("/")
